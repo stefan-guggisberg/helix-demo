@@ -32,5 +32,6 @@ async function handleRequest(req) {
   // set x-forwarded-host header (for visibility in the coralogix logs)
   headers.set('x-forwarded-host', req.headers.get('host'));
   // proxy request to origin
-  return await fetch(`${ORIGIN}${url.pathname}${url.search}`, { method, headers, body });
+  // cf doesn't cache html by default: need to override the default behaviour by setting "cacheEverything: true"
+  return await fetch(`${ORIGIN}${url.pathname}${url.search}`, { method, headers, body, cf: { cacheEverything: true } });
 }
