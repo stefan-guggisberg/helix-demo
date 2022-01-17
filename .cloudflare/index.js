@@ -15,23 +15,49 @@
 const ORIGIN = 'https://main--helix-demo--stefan-guggisberg.hlx.live';
 
 addEventListener('fetch', (event) => {
-  event.respondWith(handleRequest(event.request));
+  event.respondWith(handleRequest(event.request, event));
 });
 
 /**
  * Request handler
  * 
  * @param {Request} req
+ * @param {FetchEvent} event
  * @returns {Promise<Response>}
  */
-async function handleRequest(req) {
-  const url = new URL(req.url);
-
+ async function handleRequest(req, event) {
   const { method, body } = req;
   const headers = new Headers(req.headers);
   // set x-forwarded-host header (for visibility in the coralogix logs)
   headers.set('x-forwarded-host', req.headers.get('host'));
+  const url = new URL(req.url);
+  const originUrl = `${ORIGIN}${url.pathname}${url.search}`;
   // proxy request to origin
   // cf doesn't cache html by default: need to override the default behaviour by setting "cacheEverything: true"
-  return await fetch(`${ORIGIN}${url.pathname}${url.search}`, { method, headers, body, cf: { cacheEverything: true } });
+  return await fetch(originUrl, { method, headers, body, cf: { cacheEverything: true } });
+  //return await fetch(originUrl, { method, headers, body, cf: { cacheKey: req.url, cacheEverything: true } });
 }
+/*
+async function handleRequest(req, event) {
+  const url = new URL(req.url);
+
+  const { method, body } = req;
+  if (method === 'POST' && req.headers.get('X-Method') === 'PURGE') {
+    const result = await caches.default.delete(req, { ignoreMethod: true });
+    return new Response(`Purge succeeded: ${result}\n\n`, { status: 200  });
+  }
+  const headers = new Headers(req.headers);
+  // set x-forwarded-host header (for visibility in the coralogix logs)
+  headers.set('x-forwarded-host', req.headers.get('host'));
+
+  // cache lookup
+  let resp = await caches.default.match(req);
+  if (!resp) {
+    // proxy request to origin
+    resp =  await fetch(`${ORIGIN}${url.pathname}${url.search}`, { method, headers, body });
+    // use waitUntil so you can return the response without blocking on writing to cache
+    event.waitUntil(caches.default.put(req, resp.clone()))
+  }
+  return resp;
+}
+*/
