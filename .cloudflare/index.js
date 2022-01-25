@@ -13,6 +13,10 @@
 'use strict';
 
 addEventListener('fetch', (event) => {
+  return event.respondWith(handleEvent(event));
+});
+
+const handleEvent = async (event) => {
   const url = new URL(event.request.url);
   url.hostname = 'main--helix-demo--stefan-guggisberg.hlx.live';
   const req = new Request(url, event.request);
@@ -20,40 +24,14 @@ addEventListener('fetch', (event) => {
   // https://developers.cloudflare.com/cache/how-to/purge-cache#purge-by-single-file-by-url  
   // set x-forwarded-host request header for improved visibility in Coralogix
   //req.headers.set('x-forwarded-host', req.headers.get('host'));
-  event.respondWith(
-    fetch(req, { 
-      cf: {
-        // cf doesn't cache html by default: need to override the default behaviour by setting "cacheEverything: true"
-        cacheEverything: true,
-      },
-    })
-  );
-});
-
-/*
-// using the Cache API
-addEventListener('fetch', (event) => {
-  if (event.request.method === 'POST'
-    && event.request.headers.get('X-Method') === 'PURGE') {
-    const result = await caches.default.delete(event.request, { ignoreMethod: true });
-    event.respondWith(new Response(`Purging ${event.request.url} succeeded: ${result}\n\n`, { status: 200  }));
-    return;
-  }
-
-  const url = new URL(event.request.url);
-  url.hostname = 'main--helix-demo--stefan-guggisberg.hlx.live';
-  const req = new Request(url, event.request);
-  // set x-forwarded-host header (for visibility in the coralogix logs)
-  req.headers.set('x-forwarded-host', req.headers.get('host'));
-
-  // cache lookup
-  let resp = await caches.default.match(event.request);
-  if (!resp) {
-    // proxy request to origin
-    resp =  await fetch(req);
-    // use waitUntil so you can return the response without blocking on writing to cache
-    event.waitUntil(caches.default.put(event.request, resp.clone()))
-  }
-  event.respondWith(resp);
-});
-*/
+  let resp = await fetch(req, {
+    redirect: 'manual', 
+    cf: {
+      // cf doesn't cache html by default: need to override the default behaviour by setting "cacheEverything: true"
+      cacheEverything: true,
+    },
+  });
+  resp = new Response(resp.body, resp);
+  resp.headers.delete('x-robots-tag');
+  return resp;
+};
