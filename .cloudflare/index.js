@@ -20,10 +20,7 @@ const handleEvent = async (event) => {
   const url = new URL(event.request.url);
   url.hostname = 'main--helix-demo--stefan-guggisberg.hlx.live';
   const req = new Request(url, event.request);
-  // => setting the x-forwarded-host request header renders the request un-purgeable via purge-by-url API:
-  // https://developers.cloudflare.com/cache/how-to/purge-cache#purge-by-single-file-by-url  
-  // set x-forwarded-host request header for improved visibility in Coralogix
-  //req.headers.set('x-forwarded-host', req.headers.get('host'));
+  req.headers.set('x-forwarded-host', req.headers.get('host'));
   let resp = await fetch(req, {
     redirect: 'manual', 
     cf: {
