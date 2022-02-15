@@ -22,7 +22,6 @@ const handleEvent = async (event) => {
   const req = new Request(url, event.request);
   req.headers.set('x-forwarded-host', req.headers.get('host'));
   let resp = await fetch(req, {
-    redirect: 'manual', 
     cf: {
       // cf doesn't cache html by default: need to override the default behaviour by setting "cacheEverything: true"
       cacheEverything: true,
