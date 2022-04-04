@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Adobe. All rights reserved.
+ * Copyright 2022 Adobe. All rights reserved.
  * This file is licensed to you under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License. You may obtain a copy
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -29,7 +29,7 @@ const handleEvent = async (event) => {
   req.headers.set('x-push-invalidation', 'enabled');
   let resp = await fetch(req, {
     cf: {
-      // cf doesn't cache html by default: need to override the default behaviour by setting "cacheEverything: true"
+      // cf doesn't cache html by default: need to override the default behavior
       cacheEverything: true,
     },
   });
