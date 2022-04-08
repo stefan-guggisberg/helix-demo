@@ -1,16 +1,13 @@
 {
   "private": true,
-  "name": "helix-demo-backend",
+  "name": "helix-demo-prod-worker",
   "version": "1.0.0",
-  "description": "A template for kick starting a Cloudflare Workers project",
-  "main": "index.js",
+  "description": "A template for kick starting a Helix Production Workers project",
+  "module": "./src/index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "format": "prettier --write '**/*.{js,css,json,md}'"
+    "log": "wrangler tail -f pretty"
   },
-  "author": "Stefan Guggisberg <sguggisb@adobe.com>",
-  "license": "MIT",
-  "devDependencies": {
-    "prettier": "^2.3.2"
-  }
+  "author": "",
+  "license": "Apache-2.0"
 }

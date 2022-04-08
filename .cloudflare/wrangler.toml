@@ -1,9 +1,17 @@
-name = "helix-demo-backend"
-type = "webpack"
-
+name = "helix-prod-worker"
+type = "javascript"
 workers_dev = true
 route = "*.helix3.page/*"
 zone_id = "e4d1142a907b17fe62b7492d7c7a08e4"
 account_id = "b4adf6cfdac0918eb6aa5ad033da0747"
 
-compatibility_date = "2021-11-22"
+compatibility_date = "2022-04-08"
+
+[build.upload]
+dir = "src"
+format = "modules"
+main = "./index.mjs"
+
+[vars]
+ORIGIN_HOSTNAME = "main--helix-demo--stefan-guggisberg.hlx.live"
+

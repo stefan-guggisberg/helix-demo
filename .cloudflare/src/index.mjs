@@ -12,19 +12,12 @@
 
 'use strict';
 
-// Origin: helix .live site
-const ORIGIN_HOSTNAME = 'main--helix-demo--stefan-guggisberg.hlx.live';
-
-addEventListener('fetch', (event) => {
-  return event.respondWith(handleEvent(event));
-});
-
-const handleEvent = async (event) => {
-  const url = new URL(event.request.url);
-  url.hostname = ORIGIN_HOSTNAME;
-  const req = new Request(url, event.request);
+const handleRequest = async (request, env, ctx) => {
+  const url = new URL(request.url);
+  url.hostname = env.ORIGIN_HOSTNAME;
+  const req = new Request(url, request);
   req.headers.set('x-forwarded-host', req.headers.get('host'));
-  // set the following header if push invalidation is configured
+  // TODO: set the following header if push invalidation is configured
   // (see https://www.hlx.live/docs/setup-byo-cdn-push-invalidation#cloudflare)
   req.headers.set('x-push-invalidation', 'enabled');
   let resp = await fetch(req, {
@@ -37,4 +30,8 @@ const handleEvent = async (event) => {
   resp.headers.delete('age');
   resp.headers.delete('x-robots-tag');
   return resp;
+};
+
+export default {
+  fetch: handleRequest,
 };
