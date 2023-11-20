@@ -14,9 +14,22 @@
 
 const handleRequest = async (request, env, ctx) => {
   const url = new URL(request.url);
+
+  if (url.pathname.startsWith('/drafts/')) {
+    return new Response('Not Found', { status: 404 });
+  }
+
+  let strippedQS;
+  if (url.search && !url.pathname.match(/\.[0-9a-z]+$/i)) {
+    // extensionless request w/ query string: strip query string
+    strippedQS = url.search;
+    url.search = '';
+  }
+
   url.hostname = env.ORIGIN_HOSTNAME;
   const req = new Request(url, request);
   req.headers.set('x-forwarded-host', req.headers.get('host'));
+  req.headers.set('x-byo-cdn-type', 'cloudflare');
   // TODO: set the following header if push invalidation is configured
   // (see https://www.hlx.live/docs/setup-byo-cdn-push-invalidation#cloudflare)
   req.headers.set('x-push-invalidation', 'enabled');
@@ -27,6 +40,12 @@ const handleRequest = async (request, env, ctx) => {
     },
   });
   resp = new Response(resp.body, resp);
+  if (resp.status == 301 && strippedQS) {
+    const location = resp.headers.get('location');
+    if (location && !location.match(/\?.*$/)) {
+      resp.headers.set('location', `${location}${strippedQS}`);
+    }
+  }
   resp.headers.delete('age');
   resp.headers.delete('x-robots-tag');
   return resp;
