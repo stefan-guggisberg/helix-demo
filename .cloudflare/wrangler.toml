@@ -9,5 +9,4 @@ send_metrics = false
 compatibility_date = "2022-04-08"
 
 [vars]
-_ORIGIN_HOSTNAME = "main--helix-demo--stefan-guggisberg.hlx.live"
-ORIGIN_HOSTNAME = "main--express--adobecom.hlx.live"
+ORIGIN_HOSTNAME = "main--helix-demo--stefan-guggisberg.hlx.live"
