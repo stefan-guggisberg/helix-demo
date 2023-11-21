@@ -10,5 +10,8 @@
     "log": "wrangler tail -f pretty"
   },
   "author": "",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "wrangler": "^3.16.0"
+  }
 }
