@@ -12,27 +12,71 @@
 
 'use strict';
 
+const getExtension = (path) => {
+  const basename = path.split('/').pop();
+  const pos = basename.lastIndexOf('.');
+  return (basename === '' || pos < 1) ? '' : basename.slice(pos + 1);
+};
+
+const isMediaRequest = (url) => /\/media_[0-9a-f]{40,}[/a-zA-Z0-9_-]*\.[0-9a-z]+$/.test(url.pathname);
+
 const handleRequest = async (request, env, ctx) => {
   const url = new URL(request.url);
-
+  if (url.port) {
+    // Cloudflare opens a couple more ports than 443, so we redirect visitors
+    // to the default port to avoid confusion. 
+    // https://developers.cloudflare.com/fundamentals/reference/network-ports/#network-ports-compatible-with-cloudflares-proxy
+    const redirectTo = new URL(request.url);
+    redirectTo.port = '';
+    return new Response('Moved permanently to ' + redirectTo.href, {
+      status: 301,
+      headers: {
+        location: redirectTo.href
+      }
+    });
+  }
   if (url.pathname.startsWith('/drafts/')) {
     return new Response('Not Found', { status: 404 });
   }
 
-  let strippedQS;
-  if (url.search && !url.pathname.match(/\.[0-9a-z]+$/i)) {
-    // extensionless request w/ query string: strip query string
-    strippedQS = url.search;
+  const extension = getExtension(url.pathname);
+
+  // remember original search params
+  const savedSearch = url.search;
+
+  // sanitize search params
+  const { searchParams } = url;
+  if (isMediaRequest(url)) {
+    for (const [key] of searchParams.entries()) {
+      if (!['format', 'height', 'optimize', 'width'].includes(key)) {
+        searchParams.delete(key);
+      }
+    }
+  } else if (extension === 'json') {
+    for (const [key] of searchParams.entries()) {
+      if (!['limit', 'offset', 'sheet'].includes(key)) {
+        searchParams.delete(key);
+      }
+    }
+  } else {
+    // neither media nor json request: strip search params
     url.search = '';
   }
-
+  searchParams.sort();
+  
   url.hostname = env.ORIGIN_HOSTNAME;
+  if (!url.origin.match(/^https:\/\/main--.*--.*\.(?:aem|hlx)\.live/)) {
+    return new Response('Invalid ORIGIN_HOSTNAME', { status: 500 });
+  }
   const req = new Request(url, request);
   req.headers.set('x-forwarded-host', req.headers.get('host'));
   req.headers.set('x-byo-cdn-type', 'cloudflare');
-  // TODO: set the following header if push invalidation is configured
-  // (see https://www.hlx.live/docs/setup-byo-cdn-push-invalidation#cloudflare)
-  req.headers.set('x-push-invalidation', 'enabled');
+  if (env.PUSH_INVALIDATION) {
+    req.headers.set('x-push-invalidation', 'enabled');
+  }
+  if (env.ORIGIN_AUTHENTICATION) {
+    req.headers.set('authorization', `token ${env.ORIGIN_AUTHENTICATION}`);
+  }
   let resp = await fetch(req, {
     cf: {
       // cf doesn't cache html by default: need to override the default behavior
@@ -40,10 +84,10 @@ const handleRequest = async (request, env, ctx) => {
     },
   });
   resp = new Response(resp.body, resp);
-  if (resp.status == 301 && strippedQS) {
+  if (resp.status === 301 && savedSearch) {
     const location = resp.headers.get('location');
     if (location && !location.match(/\?.*$/)) {
-      resp.headers.set('location', `${location}${strippedQS}`);
+      resp.headers.set('location', `${location}${savedSearch}`);
     }
   }
   resp.headers.delete('age');

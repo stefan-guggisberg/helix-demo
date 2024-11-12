@@ -2,11 +2,10 @@ name = "helix-demo-prod-worker"
 main = "src/index.mjs"
 route = { pattern = "demo.helix3.page/*", zone_name = "helix3.page" }
 account_id = "b4adf6cfdac0918eb6aa5ad033da0747"
-usage_model = "bundled"
 workers_dev = true
 send_metrics = false
 
 compatibility_date = "2022-04-08"
 
 [vars]
-ORIGIN_HOSTNAME = "main--helix-demo--stefan-guggisberg.hlx.live"
+ORIGIN_HOSTNAME = "main--helix-demo--stefan-guggisberg.aem.live"
